@@ -41,44 +41,69 @@ pd.pivot(df, index='time', columns='name').plot(subplots=true)
 df.query('name == "cpu" & (value < 0 | value > 100)')
 
          ## using z_score to calculate bad date (data distribution)
-********************************
+mem = df [df['name' == "mem"] ['value']
+z_score = (mem - mem.mean())/mem.std()
+bad_mem = mem[z_score.abs() > 2]
 
---------------------------------------------------### Data validation
+        ## then we look at the "bad data"
+df.loc[bad_mem.index]
 
+--------------------------------------------------### Cleaning duplicates values
 import pandas as pd
 
+df = pd.read_csv('cart.csv', parse_dates= ['date'])
+df
+
+        ## we find duplicates considering ALL COLUMNS, boolean filter: false/true
+df.duplicated()
+        ## dup using specific columns
+df.duplicated(['date','name'])
+
+--------------------------------------------------### Data validation  converted from JSON/YAML (or something else) to Python data-types.
+
+import pandas as pd
 df = pd.read_csv('ships.cvs')
 df
 
-         ### Validate if we have NULLs in date: if its notnull (pandera does not allows nulls columns)
+         ### Validate if we have NULLs in columns (pandas schema validate does not allows nulls columns)
 
 import pandera as pa
 
 schema = pa.DataFrameSchema({
   'name': pa.Column(pa.String),
   'lat': pa.Column(pa.Float, nullable=True),
-  'lng': pa.Column(pa.Float, null=True),
+  'lng': pa.Column(pa.Float, nullable=True),
 })
 schema.validate(df)
 
-### Validate missing data (pandas only recognices NaN numeric, Nan or None object, Nat in datatimelike)
+
+
+
+
          
-         # see if we have nulls
+       
+
+--------------------------------------------------### Finding missing data
+
+import pandas as pd
+df = pd.read_csv('ships.cvs')
+df
+
+         # see if we have nulls BY ROWS
 df[df.isnull().any(axis=1)]
 
-          # %% detects an empty space
+          # Detects an empty space in 'name' (tecnically not null)
 df.iloc[-1]['name']  
 
-
-          # without spaces is an empty space
+          # if we TRIM spaces is a NULL
 df['name'] = df ['name'].str.strip()
 df.iloc[-1]['name']
 
+          ### Validate missing data (pandas only recognices NaN numeric, Nan or None object, Nat in datatimelike)
           # we import numpy and set values of empty string to = NaN to recognice it
 import numpy as np
 mask = df ['name'].str.strip() == ''
 df.loc[mask,'name'] = np.nan
 
-          # try again
+          # try again to see all the real NULLs
 df[df.isnull().any(axis=1)]
-
