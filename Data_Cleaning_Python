@@ -1,0 +1,84 @@
+--------------------------------------------------### Missing values in a column
+
+import pandas as pd
+
+df = pd.read_csv(
+      'cart.csv',
+       parse_dates=['dates'])
+df
+
+         ## see the data types (datetime64, object, float64, etc)
+df.dtypes
+
+         ## we set 'amount' to a numeric value data type (previusly a float64)
+df ['amount'].astype('Int32')
+
+         ## see if we have isnull with pandas (true/false for every value)
+df.isnull()
+
+         ## is null for each row only
+df.isnull().any(axis=1)
+
+--------------------------------------------------### Bad values in raw data
+
+import pandas as pd
+
+df = pd.read_csv(
+      'metrics.csv',
+       parse_dates=['time'])
+df.sample(10)
+
+         ## we group by to see typo errors like mayusc(select disctint) 
+df.groupby('name').describe()
+
+         ## we can count the variables to see which one we use
+df.['name'].value_counts()
+
+         ## we make a pivot to visualize the ranges and names
+pd.pivot(df, index='time', columns='name').plot(subplots=true)
+         
+         ## if we know the correct ranges values for the date you can query to see the bad data
+df.query('name == "cpu" & (value < 0 | value > 100)')
+
+         ## using z_score to calculate bad date (data distribution)
+********************************
+
+--------------------------------------------------### Data validation
+
+import pandas as pd
+
+df = pd.read_csv('ships.cvs')
+df
+
+         ### Validate if we have NULLs in date: if its notnull (pandera does not allows nulls columns)
+
+import pandera as pa
+
+schema = pa.DataFrameSchema({
+  'name': pa.Column(pa.String),
+  'lat': pa.Column(pa.Float, nullable=True),
+  'lng': pa.Column(pa.Float, null=True),
+})
+schema.validate(df)
+
+### Validate missing data (pandas only recognices NaN numeric, Nan or None object, Nat in datatimelike)
+         
+         # see if we have nulls
+df[df.isnull().any(axis=1)]
+
+          # %% detects an empty space
+df.iloc[-1]['name']  
+
+
+          # without spaces is an empty space
+df['name'] = df ['name'].str.strip()
+df.iloc[-1]['name']
+
+          # we import numpy and set values of empty string to = NaN to recognice it
+import numpy as np
+mask = df ['name'].str.strip() == ''
+df.loc[mask,'name'] = np.nan
+
+          # try again
+df[df.isnull().any(axis=1)]
+
